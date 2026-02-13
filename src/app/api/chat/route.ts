@@ -40,10 +40,13 @@ export async function POST(req: Request) {
   const usageCheck = await checkUsage(userId, plan);
 
   if (!usageCheck.allowed) {
-    return new Response(JSON.stringify({ error: usageCheck.reason }), {
-      status: 429,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: usageCheck.reason, code: "USAGE_LIMIT" }),
+      {
+        status: 429,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
   const lastUserMessage: ChatMessage | undefined =

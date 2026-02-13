@@ -1,8 +1,8 @@
 export const PLANS = {
   free: {
     name: "Gratuito",
-    description: "20 mensagens por dia",
-    dailyLimit: 20,
+    description: "3 mensagens por dia",
+    dailyLimit: 3,
     price: 0,
   },
   credits: {

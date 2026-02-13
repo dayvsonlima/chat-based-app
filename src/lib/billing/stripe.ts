@@ -21,8 +21,7 @@ export async function createCheckoutSession({
     metadata: { userId },
     line_items: [{ price: priceId, quantity: 1 }],
     mode,
-    payment_method_types:
-      mode === "payment" ? ["card", "boleto", "pix"] : ["card"],
+    payment_method_types: ["card"],
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/chat?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
   });

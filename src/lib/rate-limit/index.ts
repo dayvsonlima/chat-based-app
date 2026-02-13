@@ -8,7 +8,7 @@ const redis = new Redis({
 
 export const freePlanLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.fixedWindow(20, "1d"),
+  limiter: Ratelimit.fixedWindow(3, "1d"),
   prefix: "selene:free",
 });
 
