@@ -21,26 +21,8 @@ function parseLimitError(error: Error | undefined): string | null {
 
 export default function ConversationPage() {
   const { id } = useParams<{ id: string }>();
-  const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`/api/conversations/${id}/messages`)
-      .then((res) => res.json())
-      .then((msgs) => {
-        const formatted: UIMessage[] = msgs.map(
-          (m: { id: string; role: string; content: string }) => ({
-            id: m.id,
-            role: m.role as "user" | "assistant",
-            parts: [{ type: "text" as const, text: m.content }],
-          })
-        );
-        setInitialMessages(formatted);
-        setLoaded(true);
-      })
-      .catch(() => setLoaded(true));
-  }, [id]);
 
   const transport = useMemo(
     () =>
@@ -51,10 +33,29 @@ export default function ConversationPage() {
     [id]
   );
 
-  const { messages, sendMessage, status, error } = useChat({
+  const { messages, sendMessage, setMessages, status, error } = useChat({
     transport,
-    messages: initialMessages,
   });
+
+  useEffect(() => {
+    fetch(`/api/conversations/${id}/messages`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch messages");
+        return res.json();
+      })
+      .then((msgs) => {
+        const formatted: UIMessage[] = msgs.map(
+          (m: { id: string; role: string; content: string }) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            parts: [{ type: "text" as const, text: m.content }],
+          })
+        );
+        setMessages(formatted);
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, [id, setMessages]);
 
   const isLoading = status === "submitted" || status === "streaming";
   const limit = limitMessage || parseLimitError(error);

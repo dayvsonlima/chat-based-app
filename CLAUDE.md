@@ -20,6 +20,7 @@ Base para aplicacoes de chat com IA. Inclui autenticacao, planos de uso (gratuit
 - `(auth)` — paginas publicas de autenticacao
 - `(chat)` — paginas protegidas do chat (layout com sidebar)
 - `(billing)` — paginas de pricing (com SessionProvider)
+- `blog/` — blog publico para SEO (MDX, geracao estatica)
 - `api/` — API routes serverless
 
 ### Fluxo de uma mensagem
@@ -46,6 +47,10 @@ Base para aplicacoes de chat com IA. Inclui autenticacao, planos de uso (gratuit
 - **credits**: verifica `creditBalance` do usuario no banco, debita apos resposta
 - **unlimited**: passa direto
 
+### Blog (MDX)
+
+Posts em `content/blog/*.mdx` com frontmatter (title, description, date, author, tags, image, published). Gerados estaticamente no build. Utilitarios em `src/lib/blog.ts` (`getAllPosts`, `getPostBySlug`, `getAllSlugs`). Componentes MDX customizados em `src/components/blog/mdx-components.tsx`. Dependencias: `next-mdx-remote`, `gray-matter`, `reading-time`. RSS em `/blog/feed.xml`, sitemap em `/sitemap.xml`, robots em `/robots.txt`.
+
 ## Convencoes de codigo
 
 - TypeScript strict mode
@@ -66,6 +71,9 @@ Base para aplicacoes de chat com IA. Inclui autenticacao, planos de uso (gratuit
 | `src/lib/auth.ts` | Providers de autenticacao |
 | `src/app/globals.css` | Cores do tema |
 | `src/lib/db/schema.ts` | Schema do banco de dados |
+| `content/blog/*.mdx` | Posts do blog (frontmatter + MDX) |
+| `src/lib/blog.ts` | Utilitarios de leitura dos posts |
+| `src/components/blog/mdx-components.tsx` | Componentes customizados para MDX |
 
 ## Banco de dados
 

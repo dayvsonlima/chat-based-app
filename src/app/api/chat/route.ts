@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { conversations, messages } from "@/lib/db/schema";
 import { getModel, SYSTEM_PROMPT } from "@/lib/ai/provider";
 import { checkUsage, recordUsage, getUserPlan } from "@/lib/billing/usage";
+import { eq, and } from "drizzle-orm";
 
 interface ChatMessagePart {
   type: string;
@@ -54,7 +55,19 @@ export async function POST(req: Request) {
   const lastUserText = lastUserMessage ? getTextContent(lastUserMessage) : "";
 
   let convId = conversationId;
-  if (!convId) {
+
+  if (convId) {
+    const [existing] = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(
+        and(eq(conversations.id, convId), eq(conversations.userId, userId))
+      );
+
+    if (!existing) {
+      return new Response("Conversa nao encontrada", { status: 403 });
+    }
+  } else {
     const title = lastUserText.slice(0, 100) || "Nova conversa";
 
     const [conv] = await db
@@ -71,6 +84,11 @@ export async function POST(req: Request) {
       role: "user",
       content: lastUserText,
     });
+
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, convId));
   }
 
   // Converter para formato que streamText aceita (role + content)
@@ -84,14 +102,18 @@ export async function POST(req: Request) {
     system: SYSTEM_PROMPT,
     messages: aiMessages,
     async onFinish({ text, usage }) {
-      await db.insert(messages).values({
-        conversationId: convId,
-        role: "assistant",
-        content: text,
-        tokensUsed: usage.totalTokens,
-      });
+      try {
+        await db.insert(messages).values({
+          conversationId: convId,
+          role: "assistant",
+          content: text,
+          tokensUsed: usage.totalTokens,
+        });
 
-      await recordUsage(userId, plan);
+        await recordUsage(userId, plan);
+      } catch (error) {
+        console.error("Failed to save assistant message:", error);
+      }
     },
   });
 

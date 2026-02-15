@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useRef, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { ChatInput } from "@/components/chat/chat-input";
 import { UsageIndicator } from "@/components/chat/usage-indicator";
@@ -18,15 +19,35 @@ function parseLimitError(error: Error | undefined): string | null {
 }
 
 export default function ChatPage() {
+  const router = useRouter();
   const conversationIdRef = useRef<string | null>(null);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
 
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat" }),
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        fetch: async (input, init) => {
+          const response = await globalThis.fetch(input, init);
+          const newConvId = response.headers.get("X-Conversation-Id");
+          if (newConvId) {
+            conversationIdRef.current = newConvId;
+          }
+          return response;
+        },
+      }),
     []
   );
 
-  const { messages, sendMessage, status, error } = useChat({ transport });
+  const { messages, sendMessage, status, error } = useChat({
+    transport,
+    onFinish: () => {
+      const convId = conversationIdRef.current;
+      if (convId) {
+        router.replace(`/chat/${convId}`);
+      }
+    },
+  });
 
   const isLoading = status === "submitted" || status === "streaming";
   const limit = limitMessage || parseLimitError(error);
