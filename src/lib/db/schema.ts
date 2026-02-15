@@ -9,6 +9,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
+export const roleEnum = pgEnum("role", ["user", "admin"]);
 export const planEnum = pgEnum("plan", ["free", "credits", "unlimited"]);
 export const messageRoleEnum = pgEnum("message_role", [
   "user",
@@ -40,6 +41,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: timestamp("email_verified", { mode: "date" }),
   image: text("image"),
+  role: roleEnum("role").default("user").notNull(),
   plan: planEnum("plan").default("free").notNull(),
   creditBalance: integer("credit_balance").default(0).notNull(),
   dailyUsageCount: integer("daily_usage_count").default(0).notNull(),

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   MessageSquare,
@@ -11,6 +11,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/lib/db/schema";
@@ -20,6 +22,7 @@ interface SidebarProps {
     name?: string | null;
     email?: string | null;
     image?: string | null;
+    role?: string;
   };
 }
 
@@ -27,12 +30,35 @@ export function Sidebar({ user }: SidebarProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleDelete(e: React.MouseEvent, conversationId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const res = await fetch(`/api/conversations/${conversationId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) return;
+
+    setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+
+    if (pathname === `/chat/${conversationId}`) {
+      router.push("/chat");
+    }
+  }
 
   useEffect(() => {
     fetch("/api/conversations")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch conversations");
+        return res.json();
+      })
       .then(setConversations)
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Sidebar fetch error:", err);
+      });
   }, [pathname]);
 
   return (
@@ -74,7 +100,7 @@ export function Sidebar({ user }: SidebarProps) {
             key={conv.id}
             href={`/chat/${conv.id}`}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors truncate",
+              "group flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
               pathname === `/chat/${conv.id}`
                 ? "bg-card-hover text-foreground"
                 : "text-muted hover:bg-card-hover hover:text-foreground"
@@ -82,13 +108,30 @@ export function Sidebar({ user }: SidebarProps) {
           >
             <MessageSquare className="w-4 h-4 shrink-0" />
             {!collapsed && (
-              <span className="truncate">{conv.title}</span>
+              <>
+                <span className="truncate flex-1">{conv.title}</span>
+                <button
+                  onClick={(e) => handleDelete(e, conv.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-opacity shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </>
             )}
           </Link>
         ))}
       </nav>
 
       <div className="border-t border-border p-3 space-y-1">
+        {user.role === "admin" && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted hover:bg-card-hover hover:text-foreground transition-colors"
+          >
+            <Shield className="w-4 h-4 shrink-0" />
+            {!collapsed && "Admin"}
+          </Link>
+        )}
         <Link
           href="/pricing"
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted hover:bg-card-hover hover:text-foreground transition-colors"

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { PLANS } from "@/lib/billing/plans";
-import { Check, Zap, CreditCard, Infinity } from "lucide-react";
+import { Check, Zap, CreditCard, Infinity, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -36,7 +36,13 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen px-6 py-12">
+    <div className="min-h-screen px-6 py-12 relative">
+      <Link
+        href="/chat"
+        className="absolute top-4 right-4 p-2 rounded-lg text-muted hover:text-foreground hover:bg-card-hover transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </Link>
       <div className="max-w-5xl mx-auto">
         <div className="text-center space-y-3 mb-12">
           <h1 className="text-3xl font-bold">Escolha seu plano</h1>
